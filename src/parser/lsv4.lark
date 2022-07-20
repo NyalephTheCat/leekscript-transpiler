@@ -1,0 +1,133 @@
+script: (_global_statement)*
+
+_global_statement: block
+    | import_declaration semi
+    | global_declaration semi
+    | class_declaration
+    | statement
+
+import_declaration: "import" "(" STRING ")"
+global_declaration: "global" (pattern_assign ",")* pattern_assign?
+
+statement: block
+    | for_statement
+    | while_statement
+    | do_statement
+    | if_statement
+    | return_statement
+    | break_statement
+    | continue_statement
+    | declaration
+    | expression_statement
+    | ";"
+block: "{" expression_statement "}"
+expression_statement : expression semi
+
+for_statement : "for" (for_spec | for_in_spec) statement
+for_spec : "(" (variable_declaration | expression ";" | ";") expression? ";" expression? ")"
+for_in_spec : "(" _for_var_assign (":" _for_var_assign) "in" expression
+_for_var_assign : ("var" pattern | ID | member_expression | array_pattern | object_pattern)
+
+while_statement : "while" parenthesized_expression statement
+do_statement : "do" statement "while" parenthesized_expression semi
+
+if_statement: "if" parenthesized_expression statement ("else" statement)?
+
+return_statement: "return" expression? semi
+break_statement: "break" semi
+continue_statement: "continue" semi
+
+declaration: function_declaration
+    | variable_definition
+
+function_declaration: "function" variable_definition? function_signature block
+function_signature: param_list
+param_list: "(" _separated{spreadable{pattern_assign}, ","} ")"
+
+variable_declaration: "var" pattern_assign ("," pattern_assign)* semi
+
+class_declaration: "class" variable_definition ("extends" expression)? class_body
+class_body: "{" (method_declaration | property_declaration | ";")* "}"
+
+PRIVACY.1: /public|private|protected/
+STATIC.1: /static/
+
+method_declaration: PRIVACY? STATIC? property_definition function_signature block
+property_declaration: PRIVACY? STATIC? property_definition ("=" expression_no_comma)?
+
+pattern_assign: pattern ("=" expression_no_comma)?
+pattern: variable_definition | array_pattern | object_pattern
+array_pattern: "[" [ spreadable{expression_no_comma} ( "," spreadable{expression_no_comma} )* ] "]"
+object_pattern: "{" _separated{pattern_property, ","} "}"
+pattern_property: spreadable{pattern_assign} 
+    | (property_name | number | STRING) (":" pattern)? ("=" expression_no_comma)?
+
+variable_definition: ID
+property_definition: ID
+property_name: ID
+
+expression: expression_no_comma | sequence_expression
+sequence_expression: expression_no_comma ("," expression_no_comma)+
+parenthesized_expression: "(" expression ")"
+
+expression_no_comma: number
+    | STRING
+    | BOOL
+    | ID
+    | "this"
+    | "null"
+    | "super"
+    | array_expression
+    | map_expression
+    | parenthesized_expression
+    | function_expression
+    | arrow_function
+    | member_expression
+    //| conditional_expression
+    //| assignment_expression
+    | call_expression
+
+array_expression: "[" [ spreadable{expression_no_comma} ( "," spreadable{expression_no_comma} )* ] "]"
+map_expression: "[" ((expression_no_comma ":" expression_no_comma) ("," (expression_no_comma ":" expression_no_comma))* | ":") "]"
+
+function_expression: "function" variable_definition? function_signature block
+arrow_function: (param_list variable_definition | param_list) "=>" (block | expression_no_comma)
+
+member_expression: expression_no_comma (PROPERTY_SEP property_name | "[" expression "]")
+
+call_expression: expression_no_comma arg_list
+arg_list: "(" _separated{spreadable{expression_no_comma}, ","} ")"
+
+semi: ";"?
+
+spreadable{el}: SPREAD? el 
+
+_left_assoc{expr, op, return}: expr (op return)?
+_right_assoc{expr, op, return}: (return op)? expr
+
+_separated{x, sep}: x (sep x)* | 
+_separated1{x, sep}: x (sep x)*
+
+SPREAD: "..."
+
+PROPERTY_SEP: "."|".?"
+NOT: /!|not/
+INC_DEC: /++ |-- /
+INC_DEC_PREFIX: / ++| --/
+UPDATE_OP: /([+\-\\\/%^]|[\*|&]{1,2}|<<|>>(>?)|\?\?)=/
+
+number: INT
+
+INT: /[0-9]+/ // TODO add more options
+BOOL: /true|false/
+
+%import common.ESCAPED_STRING   -> STRING
+%import common.NEWLINE          -> NEWLINE
+%import common.CNAME            -> ID
+
+%import common.WS
+%import common.C_COMMENT        -> MULTILINE_COMMENT
+%import common.CPP_COMMENT      -> COMMENT
+%ignore WS
+%ignore COMMENT
+%ignore MULTILINE_COMMENT

@@ -1,0 +1,8 @@
+class b extends B {
+    public static b() {
+        s;
+    }
+
+    protected b;
+    private c = 10;
+}
