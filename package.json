@@ -1,0 +1,19 @@
+{
+  "name": "lsparser-js-2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "compile.sh && node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "diff": "^5.1.0",
+    "indent-string": "^5.0.0",
+    "moo": "^0.5.1",
+    "nearley": "^2.20.1"
+  }
+}

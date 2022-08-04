@@ -1,3 +1,6 @@
-*.pyc
+test
+out-test
+viz.html
 
-Main.lk
+.vscode
+node_modules

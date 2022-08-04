@@ -1,0 +1,108 @@
+// Generated automatically by nearley, version 2.20.1
+// http://github.com/Hardmath123/nearley
+(function () {
+function id(x) { return x[0]; }
+
+
+const { lexer } = require("./lexer.js")
+
+var grammar = {
+    Lexer: lexer,
+    ParserRules: [
+    {"name": "Script", "symbols": [], "postprocess": () => {return {type: "Script"}}},
+    {"name": "Script", "symbols": ["GlobalScopeList"], "postprocess": ([body]) => {return {type: "Script", body: body}}},
+    {"name": "GlobalScopeList", "symbols": ["GlobalScopeElem"], "postprocess": ([elem]) => {return {type: "GlobalScopeList", list: [elem]}}},
+    {"name": "GlobalScopeList", "symbols": ["GlobalScopeList", "_", "GlobalScopeElem"], "postprocess": ([list,,elem]) => {return {type: "GlobalScopeList", list: [...list.list, elem]}}},
+    {"name": "GlobalScopeElem", "symbols": ["GlobalDeclaration"], "postprocess": id},
+    {"name": "GlobalScopeElem", "symbols": ["Statement"], "postprocess": id},
+    {"name": "StatementList", "symbols": ["Statement"], "postprocess": ([elem]) => {return {type: "StatementList", list: [elem]}}},
+    {"name": "StatementList", "symbols": ["StatementList", "_", "Statement"], "postprocess": ([list,,elem]) => {return {type: "StatementList", list: [...list.list, elem]}}},
+    {"name": "Statement", "symbols": ["EmptyStatement"], "postprocess": id},
+    {"name": "Statement", "symbols": ["BlockStatement"], "postprocess": id},
+    {"name": "Statement", "symbols": ["VariableDeclaration"], "postprocess": id},
+    {"name": "Statement", "symbols": ["FunctionDeclaration"], "postprocess": id},
+    {"name": "Statement", "symbols": ["ForStatement"], "postprocess": id},
+    {"name": "Statement", "symbols": ["ReturnStatement"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Expression"], "postprocess": id},
+    {"name": "ExpressionList", "symbols": ["Expression"], "postprocess": ([item]) => {return {type: "ExpressionList", list: [item]}}},
+    {"name": "ExpressionList", "symbols": ["ExpressionList", "_", {"literal":","}, "_", "Expression"], "postprocess": ([list,,,,item]) => {return {type: "ExpressionList", list: [...list.list, item]}}},
+    {"name": "Expression", "symbols": ["Atom"], "postprocess": id},
+    {"name": "Atom", "symbols": ["NumberLiteral"], "postprocess": id},
+    {"name": "Atom", "symbols": ["StringLiteral"], "postprocess": id},
+    {"name": "Atom", "symbols": ["BooleanLiteral"], "postprocess": id},
+    {"name": "Atom", "symbols": ["ArrayLiteral"], "postprocess": id},
+    {"name": "Atom", "symbols": ["ObjectLiteral"], "postprocess": id},
+    {"name": "Atom", "symbols": ["MapLiteral"], "postprocess": id},
+    {"name": "Atom", "symbols": ["IdentifierReference"], "postprocess": id},
+    {"name": "Atom", "symbols": ["Pattern"], "postprocess": id},
+    {"name": "GlobalDeclaration", "symbols": [{"literal":"global"}, "__", "BindingIdentifier", "_", "Initializer", "sep"], "postprocess": ([,,id,,value]) => {return {type: "GlobalDeclaration", id, value}}},
+    {"name": "GlobalDeclaration", "symbols": [{"literal":"global"}, "__", "BindingIdentifier", "_", "sep"], "postprocess": ([,,id]) => {return {type: "GlobalDeclaration", id}}},
+    {"name": "EmptyStatement", "symbols": [{"literal":";"}], "postprocess": () => {return {type:"EmptyStatement"}}},
+    {"name": "BlockStatement", "symbols": [{"literal":"{"}, "_", {"literal":"}"}], "postprocess": () => {return {type:"BlockStatement"}}},
+    {"name": "BlockStatement", "symbols": [{"literal":"{"}, "_", "StatementList", "_", {"literal":"}"}], "postprocess": ([,,list]) => {return {type: "BlockStatement", list:list}}},
+    {"name": "VariableDeclaration", "symbols": [{"literal":"var"}, "__", "BindingIdentifier", "_", "Initializer", "sep"], "postprocess": ([,,id,,value]) => {return {type: "VariableDeclaration", id, value}}},
+    {"name": "VariableDeclaration", "symbols": [{"literal":"var"}, "__", "BindingIdentifier", "_", "sep"], "postprocess": ([,,id]) => {return {type: "VariableDeclaration", id}}},
+    {"name": "FunctionDeclaration", "symbols": [{"literal":"function"}, "__", "BindingIdentifier", "_", {"literal":"("}, "_", "ArgumentList", "_", {"literal":")"}, "_", "BlockStatement"], "postprocess": ([,,name,,,,args,,,,body]) => {return {type:"FunctionDeclaration", name, args, body}}},
+    {"name": "ArgumentList", "symbols": [], "postprocess": ([list]) => {return {type: "ArgumentList", list:[]}}},
+    {"name": "ArgumentList", "symbols": ["_ArgumentList"], "postprocess": ([list]) => {return {type: "ArgumentList", list}}},
+    {"name": "_ArgumentList", "symbols": ["AssignementExpression"], "postprocess": ([arg]) => [arg]},
+    {"name": "_ArgumentList", "symbols": ["BindingIdentifier"], "postprocess": ([arg]) => [arg]},
+    {"name": "_ArgumentList", "symbols": ["ArgumentList", "_", {"literal":","}, "_", "AssignementExpression"], "postprocess": ([list,,,,arg]) => [...list, arg]},
+    {"name": "_ArgumentList", "symbols": ["FormalArgumentList", "_", {"literal":","}, "_", "BindingIdentifier"], "postprocess": ([list,,,,arg]) => [...list, arg]},
+    {"name": "FormalArgumentList", "symbols": ["BindingIdentifier"], "postprocess": ([arg]) => [arg]},
+    {"name": "FormalArgumentList", "symbols": ["FormalArgumentList", "_", {"literal":","}, "_", "BindingIdentifier"], "postprocess": ([list,,,,arg]) => [...list, arg]},
+    {"name": "ForStatement", "symbols": ["ForIterStatement"], "postprocess": id},
+    {"name": "ForStatement", "symbols": ["ForInStatement"], "postprocess": id},
+    {"name": "ForIterStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", {"literal":";"}, "_", {"literal":";"}, "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,,,,,,,statement]) => {return {type: "ForIterStatement", statement}}},
+    {"name": "ForIterStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "VariableDeclaration", "_", {"literal":";"}, "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,init,,,,,,statement]) => {return {type: "ForIterStatement", init, statement}}},
+    {"name": "ForIterStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "VariableDeclaration", "_", "Expression", "_", {"literal":";"}, "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,init,,cond,,,,,,statement]) => {return {type: "ForIterStatement", init, cond, statement}}},
+    {"name": "ForIterStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "VariableDeclaration", "_", "Expression", "_", {"literal":";"}, "_", "Expression", "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,init,,cond,,,,iter,,,,statement]) => {return {type: "ForIterStatement", init, cond, iter, statement}}},
+    {"name": "ForIterStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "VariableDeclaration", "_", "Expression", "_", {"literal":";"}, "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,init,,,,,iter,,,,statement]) => {return {type: "ForIterStatement", init, iter, statement}}},
+    {"name": "ForIterStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", {"literal":";"}, "_", "Expression", "_", {"literal":";"}, "_", "Expression", "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,,,cond,,,,iter,,,,statement]) => {return {type: "ForIterStatement", cond, iter, statement}}},
+    {"name": "ForIterStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", {"literal":";"}, "_", "Expression", "_", {"literal":";"}, "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,,,cond,,,,,,statement]) => {return {type: "ForIterStatement", cond, statement}}},
+    {"name": "ForIterStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", {"literal":";"}, "_", {"literal":";"}, "_", "Expression", "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,,,,,iter,,,,statement]) => {return {type: "ForIterStatement", iter, statement}}},
+    {"name": "ForIterStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", "VariableDeclaration", "_", {"literal":";"}, "_", "Expression", "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,init,,,,iter,,,,statement]) => {return {type: "ForIterStatement", init, iter, statement}}},
+    {"name": "ForInStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", {"literal":"var"}, "__", "BindingIdentifier", "_", {"literal":":"}, "_", {"literal":"var"}, "__", "BindingIdentifier", "__", {"literal":"in"}, "__", "Expression", "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,,,keyName,,,,,,valueName,,,,expr,,,,statement]) => {return {type: "ForInStatement", keyName, valueName, expr, statement}}},
+    {"name": "ForInStatement", "symbols": [{"literal":"for"}, "_", {"literal":"("}, "_", {"literal":"var"}, "__", "BindingIdentifier", "__", {"literal":"in"}, "__", "Expression", "_", {"literal":")"}, "_", "Statement"], "postprocess": ([,,,,,,valueName,,,,expr,,,,statement]) => {return {type: "ForInStatement", valueName, expr, statement}}},
+    {"name": "ReturnStatement", "symbols": [{"literal":"return"}, "__", "Expression", "sep"], "postprocess": ([,,value]) => {return {type: "ReturnStatement", value}}},
+    {"name": "AssignementExpression", "symbols": ["BindingIdentifier", "_", "Initializer"], "postprocess": ([id,,value]) => {return {type: "AssignementExpression", id, value}}},
+    {"name": "Initializer", "symbols": [{"literal":"="}, "_", "Expression"], "postprocess": ([,,value]) => value},
+    {"name": "Pattern", "symbols": ["PatternArray"], "postprocess": id},
+    {"name": "Pattern", "symbols": ["PatternObject"], "postprocess": id},
+    {"name": "PatternArray", "symbols": ["Pattern", "_", {"literal":"["}, "_", "Expression", "_", {"literal":"]"}], "postprocess": ([root,,,,index]) => {return {type: "PatternArray", root, index}}},
+    {"name": "PatternObject", "symbols": ["Pattern", "_", {"literal":"."}, "_", "IdentifierReference"], "postprocess": ([root,,,,id]) => {return {type: "PatternObject", root, id}}},
+    {"name": "NumberLiteral", "symbols": [(lexer.has("Integer") ? {type: "Integer"} : Integer)], "postprocess": ([id]) => id.value},
+    {"name": "NumberLiteral", "symbols": [(lexer.has("Decimal") ? {type: "Decimal"} : Decimal)], "postprocess": ([id]) => id.value},
+    {"name": "NumberLiteral", "symbols": [(lexer.has("Hexadecimal") ? {type: "Hexadecimal"} : Hexadecimal)], "postprocess": ([id]) => id.value},
+    {"name": "NumberLiteral", "symbols": [(lexer.has("Binary") ? {type: "Binary"} : Binary)], "postprocess": ([id]) => id.value},
+    {"name": "StringLiteral", "symbols": [(lexer.has("String") ? {type: "String"} : String)], "postprocess": ([id]) => id.value},
+    {"name": "BooleanLiteral", "symbols": [(lexer.has("boolean") ? {type: "boolean"} : boolean)], "postprocess": ([id]) => id.value},
+    {"name": "ArrayLiteral", "symbols": [{"literal":"["}, "_", {"literal":"]"}], "postprocess": () => {return {type: "ArrayLiteral", data:[]}}},
+    {"name": "ArrayLiteral", "symbols": [{"literal":"["}, "_", "ExpressionList", "_", {"literal":"]"}], "postprocess": ([,,data,,]) => {return {type: "ArrayLiteral", data}}},
+    {"name": "MapLiteral", "symbols": [{"literal":"["}, "_", {"literal":":"}, "_", {"literal":"]"}], "postprocess": () => {return {type: "MapLiteral", data:[]}}},
+    {"name": "MapLiteral", "symbols": [{"literal":"["}, "_", "PropertyList", "_", {"literal":"]"}], "postprocess": ([,,data,,]) => {return {type: "MapLiteral", data}}},
+    {"name": "ObjectLiteral", "symbols": [{"literal":"{"}, "_", {"literal":"}"}], "postprocess": () => {return {type: "ObjectLiteral", data: []}}},
+    {"name": "ObjectLiteral", "symbols": [{"literal":"{"}, "_", "PropertyList", "_", {"literal":"}"}], "postprocess": ([,,data,,]) => {return {type: "ObjectLiteral", data}}},
+    {"name": "PropertyList", "symbols": ["Property"], "postprocess": ([property]) => {return {type: "PropertyList", list: [property]}}},
+    {"name": "PropertyList", "symbols": ["PropertyList", "_", {"literal":","}, "_", "Property"], "postprocess": ([list,,,,property]) => {return {type: "PropertyList", list: [...list, property]}}},
+    {"name": "Property", "symbols": ["PropertyName", "_", {"literal":":"}, "_", "Expression"], "postprocess": ([name,,,,value]) => {return {type: "Property", name, value}}},
+    {"name": "PropertyName", "symbols": [(lexer.has("ID") ? {type: "ID"} : ID)], "postprocess": ([name]) => {return {type: "PropertyName", name:name.value}}},
+    {"name": "IdentifierReference", "symbols": [(lexer.has("ID") ? {type: "ID"} : ID)], "postprocess": ([name]) => {return {type: "IdentifierReference", name:name.value}}},
+    {"name": "BindingIdentifier", "symbols": [(lexer.has("ID") ? {type: "ID"} : ID)], "postprocess": ([name]) => {return {type: "BindingIdentifier", name:name.value}}},
+    {"name": "_$ebnf$1", "symbols": []},
+    {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", (lexer.has("WS") ? {type: "WS"} : WS)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": () => null},
+    {"name": "__$ebnf$1", "symbols": [(lexer.has("WS") ? {type: "WS"} : WS)]},
+    {"name": "__$ebnf$1", "symbols": ["__$ebnf$1", (lexer.has("WS") ? {type: "WS"} : WS)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "__", "symbols": ["__$ebnf$1"], "postprocess": () => null},
+    {"name": "sep", "symbols": ["__"], "postprocess": () => ";"},
+    {"name": "sep", "symbols": ["_", {"literal":";"}, "_"], "postprocess": () => ";"}
+]
+  , ParserStart: "Script"
+}
+if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
+   module.exports = grammar;
+} else {
+   window.grammar = grammar;
+}
+})();
