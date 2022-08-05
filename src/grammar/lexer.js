@@ -7,6 +7,7 @@ module.exports.lexer = moo.states({
             "case",
             "catch",
             "class",
+            "constructor",
             "const",
             "continue",
             "debugger",
@@ -41,6 +42,13 @@ module.exports.lexer = moo.states({
             "with",
             "yield",
         ],
+
+        visibility: [
+            "public",
+            "private",
+            "protected"
+        ],
+        static: "static",
         
         boolean: [
             "true",
@@ -73,7 +81,6 @@ module.exports.lexer = moo.states({
             "<<", ">>>", ">>",
             ">=", "<=",
             ">", "<",
-            // "===", "!==",
             "==", "!=",
             "&&", "||",
             "&", "^", "|",
@@ -82,6 +89,7 @@ module.exports.lexer = moo.states({
         ],
 
         semi: ";",
+        comma: ",",
 
         // Numbers
         Hexadecimal: { match: /0[xX][0-9A-Fa-f](?:_?[0-9A-Fa-f])*/ },

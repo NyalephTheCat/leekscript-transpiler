@@ -12,17 +12,17 @@ Script ->
 
 GlobalScopeList ->
     GlobalScopeElem                                                            {% ([elem]) => {return {type: "GlobalScopeList", list: [elem]}} %}
-  | GlobalScopeList _ GlobalScopeElem                                          {% ([list,,elem]) => {return {type: "GlobalScopeList", list: [...list.list, elem]}} %}
+  | GlobalScopeList __ GlobalScopeElem                                          {% ([list,,elem]) => {return {type: "GlobalScopeList", list: [...list.list, elem]}} %}
 
 GlobalScopeElem ->
     GlobalDeclaration                                                          {% id %}
-# | ClassDefinition                                                            {% id %}
-# | IncludeStatement                                                           {% id %}
+  | ClassDefinition                                                            {% id %}
+  | IncludeStatement                                                           {% id %}
   | Statement                                                                  {% id %}
 
 StatementList ->
     Statement                                                                  {% ([elem]) => {return {type: "StatementList", list: [elem]}} %}
-  | StatementList _ Statement                                                  {% ([list,,elem]) => {return {type: "StatementList", list: [...list.list, elem]}} %}
+  | StatementList __ Statement                                                  {% ([list,,elem]) => {return {type: "StatementList", list: [...list.list, elem]}} %}
 
 Statement ->
     EmptyStatement                                                             {% id %}
@@ -30,13 +30,13 @@ Statement ->
   | VariableDeclaration                                                        {% id %}
   | FunctionDeclaration                                                        {% id %}
   | ForStatement                                                               {% id %}
-# | IfStatement                                                                {% id %}
-# | WhileStatement                                                             {% id %}
-# | DoWhileStatement                                                           {% id %}
-# | BreakStatement                                                             {% id %}
-# | ContinueStatement                                                          {% id %}
+  | IfStatement                                                                {% id %}
+  | WhileStatement                                                             {% id %}
+  | DoWhileStatement                                                           {% id %}
+  | BreakStatement                                                             {% id %}
+  | ContinueStatement                                                          {% id %}
   | ReturnStatement                                                            {% id %}
-  | Expression                                                                 {% id %}
+  | ExpressionStatement                                                        {% ([statement]) => {return {type: "ExpressionStatement", statement}} %}
 
 ExpressionList ->
     Expression                                                                 {% ([item]) => {return {type: "ExpressionList", list: [item]}} %}
@@ -61,6 +61,48 @@ Atom ->
 GlobalDeclaration ->
     "global" __ BindingIdentifier _ Initializer sep                            {% ([,,id,,value]) => {return {type: "GlobalDeclaration", id, value}} %}
   | "global" __ BindingIdentifier _ sep                                        {% ([,,id]) => {return {type: "GlobalDeclaration", id}} %}
+
+# ClassDefinition
+
+ClassDefinition ->
+    "class" _ BindingIdentifier _ ClassHeritage _ "{" _ ClassBody _ "}"        {% ([,,name,,heritage,,,,body]) => {return {type: "ClassDefinition", name, heritage, body}} %}
+
+ClassHeritage ->
+    "extends" _ IdentifierReference                                            {% ([,,superClass]) => {return {type: "ClassHeritage", superClass}} %}
+  | null                                                                       {% () => null %}
+
+ClassBody ->
+    ClassMethod                                                                {% ([method]) => {return {type: "ClassBody", list: [method]}} %}
+  | ClassProperty                                                              {% ([property]) => {return {type: "ClassBody", list: [property]}} %}
+  | Constructor                                                                {% ([constructor]) => {return {type: "ClassBody", list: [constructor]}} %}
+  | ClassBody _ ClassMethod                                                    {% ([list,,method]) => {return {type: "ClassBody", list: [...list.list, method]}} %}
+  | ClassBody _ ClassProperty                                                  {% ([list,,property]) => {return {type: "ClassBody", list: [...list.list, property]}} %}
+  | ClassBody _ Constructor                                                    {% ([list,,constructor]) => {return {type: "ClassBody", list: [...list.list, constructor]}} %}
+
+ClassMethod ->
+    Visibility Static BindingIdentifier _ "(" _ ArgumentList _ ")" 
+        _ BlockStatement                                                       {% ([visibility,static,name,,,,args,,,,body]) => {return {type:"ClassMethod", name, args, body, visibility, static}} %}
+
+Constructor ->
+    Visibility "constructor" _ "(" _ ArgumentList _ ")" 
+        _ BlockStatement                                                       {% ([visibility,,,,,args,,,,body]) => {return {type:"Constructor", args, body, visibility}} %}
+
+ClassProperty ->
+    Visibility Static BindingIdentifier _ Initializer sep                      {% ([visibility,static,name,,init]) => {return {type: "ClassProperty", visibility, static, name, init}} %}
+  | Visibility Static BindingIdentifier sep                                    {% ([visibility,static,name]) => {return {type: "ClassProperty", visibility, static, name}} %}
+
+Visibility ->
+    %visibility __                                                             {% ([visibility]) => visibility.value %}
+  | null                                                                       {% () => null %}
+
+Static ->
+    %static __                                                                 {% ([static]) => static.value %}
+  | null                                                                       {% () => null %}
+
+# IncludeStatement
+
+IncludeStatement ->
+    "include" _ "(" _ StringLiteral _ ")" sep                                  {% ([,,,,path]) => {return {type: "IncludeStatement", path}} %}
 
 ### Statement
 
@@ -124,10 +166,42 @@ ForInStatement ->
   | "for" _ "(" 
         _ "var" __ BindingIdentifier __ "in" __ Expression _ ")" _ Statement   {% ([,,,,,,valueName,,,,expr,,,,statement]) => {return {type: "ForInStatement", valueName, expr, statement}} %}
 
+
+# If
+
+IfStatement ->
+    "if" _ "(" _ Expression _ ")" _ Statement                                  {% ([,,,,cond,,,,then]) => {return {type: "IfStatement", cond, then}} %}
+  | "if" _ "(" _ Expression _ ")" _ Statement _ "else" _ Statement             {% ([,,,,cond,,,,then,,,,elseCase]) => {return {type: "IfStatement", cond, then, elseCase}} %}
+
+# While
+
+WhileStatement ->
+    "while" _ "(" _ Expression _ ")" _ Statement                               {% ([,,,,cond,,,,loop]) => {return {type: "WhileStatement", cond, loop}} %}
+
+# DoWhile
+
+DoWhileStatement ->
+    "do" _ Statement _ "while" _ "(" _ Expression _ ")" _ ";"                  {% ([,,loop,,,,,,cond]) => {return {type: "DoWhileStatement", cond, loop}} %}
+
+# Break
+
+BreakStatement ->
+    "break" sep                                                                {% () => {return {type: "BreakStatement"}} %}
+
+# Continue
+
+ContinueStatement ->
+    "continue" sep                                                             {% () => {return {type: "ContinueStatement"}} %}
+
 # Return
 
 ReturnStatement ->
     "return" __ Expression sep                                                 {% ([,,value]) => {return {type: "ReturnStatement", value}} %}
+
+# Expression
+
+ExpressionStatement ->
+    Expression sep                                                             {% ([statement]) => statement %}
 
 ### Expression
 
@@ -160,7 +234,7 @@ NumberLiteral ->
   | %Binary                                                                    {% ([id]) => id.value %}
 
 StringLiteral ->
-    %String                                                                    {% ([id]) => id.value %}
+    %String                                                                    {% ([id]) => {return {type: "StringLiteral", value:id.value}} %}
 
 BooleanLiteral ->
     %boolean                                                                   {% ([id]) => id.value %}
@@ -179,7 +253,7 @@ ObjectLiteral ->
 
 PropertyList ->
     Property                                                                   {% ([property]) => {return {type: "PropertyList", list: [property]}} %}
-  | PropertyList _ "," _ Property                                              {% ([list,,,,property]) => {return {type: "PropertyList", list: [...list, property]}} %}
+  | PropertyList _ "," _ Property                                              {% ([list,,,,property]) => {return {type: "PropertyList", list: [...list.list, property]}} %}
 
 Property ->
     PropertyName _ ":" _ Expression                                            {% ([name,,,,value]) => {return {type: "Property", name, value}} %}
@@ -197,5 +271,5 @@ BindingIdentifier ->
 _ -> %WS:*                                          {% () => null %}
 __ -> %WS:+                                         {% () => null %}
 sep ->
-    __                                              {% () => ";" %}
+    _                                               {% () => ";" %}
   | _ ";" _                                         {% () => ";" %}
