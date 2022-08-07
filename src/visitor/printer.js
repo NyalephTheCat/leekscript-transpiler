@@ -1,63 +1,31 @@
-const { getTransformer } = require("./utils.js")
+const { buildTransformer } = require("./visitor");
 
-const indent = (str) => {
-    if (typeof str !== "string") {
-        console.log(str)
-        return str;
+function opt(el) { return el ? el : ""}
+
+const commenter = buildTransformer({}, {}, {
+    default: (ast) => ast,
+    defaultTerminal: (ast) => {
+        if (!ast.comments || ast.comments.length === 0) return ast;
+        const comments = ast.comments;
+        delete ast.comments
+        return {type: "CommentHolder", values: [...comments, ast]}
     }
-    return str.split("\n").map(x => "    " + x).join("\n")
-}
+});
 
-module.exports.printer = getTransformer({
-    default: (node) => node,
-    
-    Script: ({body}) => body ? body : "",
+const printer = buildTransformer({
+    Script: (node) => `${opt(node.values[0])}${node.values[1]}`,
+    GlobalScopeList: (node) => `${node.values.join("\n")}`,
+    GlobalDeclaration: (node) => `${node.values[0]} ${node.values[1]}${opt(node.values[2])}${node.values[3]}`,
 
-    GlobalScopeList: ({list}) => list.join("\n"),
-    StatementList: ({list}) => list.join("\n"),
+    Initializer: (node) => ` = ${node.values[1]}`,
 
-    GlobalDeclaration: ({id, value}) => `global ${id}${value?` = ${value}`:""};`,
+    BindingIdentifier: (node) => node.values[0],
 
-    ClassDefinition: ({name, heritage, body}) => `class ${name}${heritage ? ` ${heritage}` : ""} {\n${indent(body)}\n}`,
-    ClassHeritage: ({superClass}) => `extends ${superClass}`,
-    ClassBody: ({list}) => list.join("\n"),
-    ClassProperty: ({visibility, static, name, init}) => `${visibility ? visibility + " " : ""}${static ? static + " " : ""}${name}${init ? init : ""};`,
-    ClassMethod: ({visibility, static, name, args, body}) => `${visibility ? visibility + " " : ""}${static ? static + " " : ""}${name}(${args}) ${body}`,
-    Constructor: ({visibility, args, body}) => `${visibility ? visibility + " " : ""}constructor(${args}) ${body}`,
+    EOF: () => "",
 
-    IncludeStatement: (path) => `include(${path.path});`,
-
-    EmptyStatement: () => `;`,
-    BlockStatement: ({list}) => list ? `{\n${indent(list)}\n}` : "{}",
-    VariableDeclaration: ({id, value}) => `var ${id}${value?` = ${value}`:""};`,
-    FunctionDeclaration: ({name, args, body}) => `function ${name}(${args}) ${body}`,
-    ArgumentList: ({list}) => list.join(", "),
-
-    ForIterStatement: ({init, cond, iter, statement}) => `for (${init ? init : ";"}${cond ? " " + cond : ""};${iter ? " " + iter : ""}) ${statement}`,
-    ForInStatement: ({keyName, valueName, expr, statement}) => `for (${keyName ? `var ${keyName} : ` : ""}var ${valueName} in ${expr}) ${statement}`,
-
-    IfStatement: ({cond, then, elseCase}) => `if (${cond}) ${then}${elseCase ? ` else ${elseCase}` : ""}`,
-
-    WhileStatement: ({cond, loop}) => `while (${cond}) ${loop}`,
-    DoWhileStatement: ({cond, loop}) => `do ${loop} while (${cond});`,
-
-    BreakStatement: () => `break;`,
-    ContinueStatement: () => `continue;`,
-
-    ReturnStatement: ({value}) => `return ${value};`,
-
-    ExpressionStatement: ({statement}) => `${statement};`,
-    ExpressionList: ({list}) => list.join(", "),
-
-    BindingIdentifier: ({name}) => name,
-    IdentifierReference: ({name}) => name,
-    PropertyName: ({name}) => name,
-
-    StringLiteral: ({value}) => `"${value}"`,
-    ArrayLiteral: ({data}) => `[${data}]`,
-    MapLiteral: ({data}) => data ? "[:]" : `[${data}]`,
-    ObjectLiteral: ({data}) => `{${data}}`,
-
-    PropertyList: ({list}) => list.join(", "),
-    Property: ({name, value}) => `${name}: ${value}`,
+    CommentHolder: (node) => node.values.join("\n"),
+}, {}, {
+    defaultTerminal: (node) => node.value
 })
+
+module.exports = { printer, commenter }

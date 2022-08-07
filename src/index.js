@@ -1,31 +1,29 @@
+const yargs = require("yargs");
+const fs = require("fs");
 const nearley = require("nearley");
-const fs = require("fs")
-const grammar = require("./grammar/ls.js");
-const util = require('node:util');
-require("colors");
-const {diffLines} = require("diff");
+const grammar = require("./grammar/ls");
+const { inspect } = require("util");
+const { lexer } = require("./lexer/lexer");
+const { printer, commenter } = require("./visitor/printer");
 
-const {printer} = require("./visitor/printer.js")
+const options = yargs
+ .usage("Usage: -f <file> -o <output>")
+ .option("f", { alias: "file", describe: "The file to parse", type: "string", default: null })
+ .option("o", { alias: "out", describe: "The output file", type: "string", default: null})
+ .argv;
 
-const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar))
+const input = fs.readFileSync(options.file).toString();
 
-const filename = "test"
+console.log(`${options.file} > ${options.out}`);
 
-const inputString = fs.readFileSync(filename).toString()
-const results = parser.feed(inputString).results
+const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
 
-const outString = printer(results[0]) ?? ""
+var ast = parser.feed(input).results
 
-fs.writeFileSync("out-" + filename, outString)
+ast = commenter(ast[0])
 
-const diff = diffLines(inputString, outString)
+//console.log(inspect(ast, { depth: null}))
 
-diff.forEach((part) => {
-    // green for additions, red for deletions
-    // grey for common parts
-    const color = part.added ? 'green' :
-        part.removed ? 'red' : 'grey';
-    process.stdout.write(part.value[color]);
-});
+const out = printer(ast, {});
 
-console.log("\n", util.inspect(results, {depth: null}))
+console.log(out)

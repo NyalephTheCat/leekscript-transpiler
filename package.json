@@ -2,18 +2,22 @@
   "name": "lsparser-js-2",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "build": "compile.sh && node src/index.js"
+    "build": "nearleyc src/grammar/ls.ne -o src/grammar/ls.js",
+    "run": "node . -f test.ls"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "boxen": "^4.0",
+    "chalk": "^2.4",
     "colors": "^1.4.0",
     "diff": "^5.1.0",
     "indent-string": "^5.0.0",
     "moo": "^0.5.1",
-    "nearley": "^2.20.1"
+    "nearley": "^2.20.1",
+    "yargs": "^13.2"
   }
 }
