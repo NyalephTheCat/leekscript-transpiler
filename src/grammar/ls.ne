@@ -1,52 +1,116 @@
 @{%
     const {lexer} = require("../lexer/lexer.js")
 
-    const store = (type) => (values) => {return {type, values, terminal: false}}
-    const storeList = (type) => (values) => {return {type, values: values[0], terminal: false}}
+    const {ast} = require("./parserTools.js")
 %}
 
 @lexer lexer
 
+###############################################################################
+###                                 Macros                                  ###
+###############################################################################
+
+
+###############################################################################
+###                                Generals                                 ###
+###############################################################################
+
 Script ->
-    GlobalScopeList:? %EOF                                                     {% store("Script") %}
+    MainScope EOF                                                              {% ast("Script") %}
 
-GlobalScopeList ->
-    GlobalScopeElem:+                                                          {% storeList("GlobalScopeList") %}
+MainScope ->
+    Expression (Sep MainScope):*                                               {% ast("MainScope") %}
 
-GlobalScopeElem ->
-    GlobalDeclaration                                                          {% id %}
-# | ClassDefinition
-# | IncludeStatement
-# | Statement
+StatementList ->
+    Statement (Sep StatementList):*                                            {% ast("StatementList") %}
 
-#### Global Scope
-
-GlobalDeclaration ->
-    "global" BindingIdentifier Initializer:? sep                               {% store("GlobalDeclaration") %}
-
-
-#### Expression
+Statement ->
+    Expression                                                                 {% id %}
 
 Expression ->
-    Atom                                                                       {% id %}
+    MemberExpression                                                           {% id %}
 
-Atom ->
+MemberExpression ->
+    PrimaryExpression                                                          {% id %}
+  | MemberExpression "[" Expression "]"                                        {% ast("MemberExpressionIndex") %}
+  | MemberExpression "." IdentifierReference                                   {% ast("MemberExpressionProperty") %}
+
+PrimaryExpression ->
     IdentifierReference                                                        {% id %}
+  | String                                                                     {% id %}
+  | Number                                                                     {% id %}
+  | ArrayLiteral                                                               {% id %}
+  | ObjectLiteral                                                              {% id %}
+  | MapLiteral                                                                 {% id %}
+  | "this"                                                                     {% id %}
+  | FunctionExpression                                                         {% id %}
+  | "(" ExpressionList:? ")"                                                   {% ast("ParenthesizedExpressionList") %}
 
-#### Parts
+FunctionExpression ->
+    "function" "(" ExpressionList:? ")" FunctionBody                           {% ast("FunctionExpression") %}
 
-Initializer ->
-    "=" Expression                                                             {% store("Initializer") %}
+FunctionBody ->
+    "{" StatementList "}"                                                      {% ast("FunctionBody") %}
 
-#### IDs
+###############################################################################
+###                                 Utils                                   ###
+###############################################################################
+
+PropertyList ->
+    PropertyAssign ("," PropertyList):*                                        {% ast("PropertyList") %}
+
+PropertyAssign ->
+    (BindingIdentifier ":" Expression)                                         {% ast("PropertyAssign") %}
+
+ExpressionList ->
+    Expression ("," ExpressionList):*                                          {% ast("ExpressionList") %}
+
+###############################################################################
+###                                Literals                                 ###
+###############################################################################
+
+######                           Identifiers                             ######
 
 BindingIdentifier ->
-    %ID                                                                        {% id %}
+    %ID                                                                        {% ast("BindingIdentifier") %}
 
 IdentifierReference ->
-    %ID                                                                        {% id %}
+    %ID                                                                        {% ast("IdentifierReference") %}
 
-#### Separator
+######                             String                                ######
 
-sep ->
-    %Semi:?                                                                    {% id %}
+String ->
+    %String                                                                    {% id %}
+
+######                             Number                                ######
+
+Number ->
+    %Integer                                                                   {% id %}
+  | %Decimal                                                                   {% id %}
+  | %Binary                                                                    {% id %}
+  | %Hexadecimal                                                               {% id %}
+
+######                             Array                                 ######
+
+ArrayLiteral ->
+    "[" ExpressionList:? "]"                                                   {% ast("ArrayLiteral") %}
+
+######                             Object                                ######
+
+ObjectLiteral ->
+    "{" PropertyList:? "}"                                                     {% ast("ObjectLiteral") %}
+
+######                              Map                                  ######
+
+MapLiteral ->
+    "[" (PropertyList | ":") "]"                                               {% ast("MapLiteral") %}
+
+######                            Separator                              ######
+
+Sep ->
+    ";":?                                                                      {% ast("Sep") %}
+
+######                              EOF                                  ######
+
+EOF ->
+    %EOF                                                                       {% id %}

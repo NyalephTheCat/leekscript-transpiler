@@ -11,7 +11,7 @@ function transform(ast, visitor, options = {}, transformerOption = {default: (el
     }
     if (ast.values)
         ast.values = ast.values.map((el) => transform(el, visitor, options, transformerOption))
-    return transformerOption.onExit(hasRule ? visitor[ast.type](ast, options) : transformerOption.defaultTerminal(ast, options));
+    return transformerOption.onExit(hasRule ? visitor[ast.type](ast, options) : transformerOption.default(ast, options));
 }
 
 function buildTransformer(visitor, defaultOptions, transformerOption) {

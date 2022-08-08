@@ -1,6 +1,7 @@
 const { buildTransformer } = require("./visitor");
 
 function opt(el) { return el ? el : ""}
+function indent(el, options) { return el.replace(/^/gm, options.indent) }
 
 const commenter = buildTransformer({}, {}, {
     default: (ast) => ast,
@@ -13,18 +14,20 @@ const commenter = buildTransformer({}, {}, {
 });
 
 const printer = buildTransformer({
-    Script: (node) => `${opt(node.values[0])}${node.values[1]}`,
-    GlobalScopeList: (node) => `${node.values.join("\n")}`,
-    GlobalDeclaration: (node) => `${node.values[0]} ${node.values[1]}${opt(node.values[2])}${node.values[3]}`,
-
-    Initializer: (node) => ` = ${node.values[1]}`,
-
-    BindingIdentifier: (node) => node.values[0],
-
+    Comma: (node, options) => `${node.value} `,
+    Colon: (node, options) => `${node.value} `,
+    Sep: (_, options) => options.semi ? ";" : "",
     EOF: () => "",
 
-    CommentHolder: (node) => node.values.join("\n"),
-}, {}, {
+    Comment: (node) => node.value + "\n"
+}, {
+    semi: true,
+    indent: '  ',
+}, {
+    default: (node) => (node.values)
+                            .flat(2)
+                            .filter((el) => el != null)
+                            .join(node.sep ?? ""),
     defaultTerminal: (node) => node.value
 })
 
