@@ -28,6 +28,7 @@ const printer = buildTransformer({
                             .flat(2)
                             .filter((el) => el != null)
                             .join(node.sep ?? ""),
+
     defaultTerminal: (node) => node.value
 })
 

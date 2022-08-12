@@ -2,9 +2,11 @@ const moo = require("moo")
 
 const lexer = moo.compile({
     ID: { match: /[a-zA-Z_][a-zA-Z0-9_]*/, type: moo.keywords(Object.fromEntries([
+        'else',
         'for',
         'function',
         'global',
+        'if',
         'super',
         'this',
         'var',
@@ -16,6 +18,7 @@ const lexer = moo.compile({
         "[", "]",
     ],
 
+    Arrow: ["->", "=>"],
     Equal: "=",
     
     Semi: ";",

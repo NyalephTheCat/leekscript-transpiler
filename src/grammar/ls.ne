@@ -19,13 +19,18 @@ Script ->
     MainScope EOF                                                              {% ast("Script") %}
 
 MainScope ->
-    Expression (Sep MainScope):*                                               {% ast("MainScope") %}
+    Statement (Sep MainScope):*                                                {% ast("MainScope") %}
 
 StatementList ->
     Statement (Sep StatementList):*                                            {% ast("StatementList") %}
 
 Statement ->
-    Expression                                                                 {% id %}
+    BlockStatement                                                             {% id %}
+  | IfStatement                                                                {% id %}
+  | Expression                                                                 {% id %}
+
+IfStatement ->
+    "if" "(" Expression ")" Statement ("else" Statement):?                     {% ast("IfStatement", {sep: ' '}) %}
 
 Expression ->
     MemberExpression                                                           {% id %}
@@ -44,13 +49,18 @@ PrimaryExpression ->
   | MapLiteral                                                                 {% id %}
   | "this"                                                                     {% id %}
   | FunctionExpression                                                         {% id %}
-  | "(" ExpressionList:? ")"                                                   {% ast("ParenthesizedExpressionList") %}
+  | "(" Expression ")"                                                         {% ast("ParenthesizedExpression") %}
+  | ArrowExpression                                                            {% id %}
 
 FunctionExpression ->
-    "function" "(" ExpressionList:? ")" FunctionBody                           {% ast("FunctionExpression") %}
+    "function" "(" ExpressionList:? ")" BlockStatement                         {% ast("FunctionExpression") %}
 
-FunctionBody ->
-    "{" StatementList "}"                                                      {% ast("FunctionBody") %}
+BlockStatement ->
+    "{" StatementList:? "}"                                                    {% ast("BlockStatement") %}
+
+ArrowExpression ->
+    "(" ExpressionList:? ")" "=>" Statement                                    {% ast("ArrowExpression") %}
+  | PrimaryExpression "=>" Statement                                           {% ast("ArrowExpression") %}
 
 ###############################################################################
 ###                                 Utils                                   ###
