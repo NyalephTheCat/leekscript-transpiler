@@ -18,11 +18,13 @@ console.log(`${options.file} > ${options.out}`);
 
 const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
 
+//console.log(input)
+
 var ast = parser.feed(input).results
 
 ast = commenter(ast[0])
 
-console.log(inspect(ast, { depth: null}))
+// console.log(inspect(ast, { depth: null}))
 
 const out = printer(ast, {});
 
