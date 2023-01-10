@@ -24,7 +24,7 @@ var ast = parser.feed(input).results
 
 ast = commenter(ast[0])
 
-// console.log(inspect(ast, { depth: null}))
+console.log(inspect(ast, { depth: null, colorize: true}))
 
 const out = printer(ast, {});
 

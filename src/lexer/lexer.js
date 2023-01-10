@@ -1,4 +1,5 @@
 const moo = require("moo")
+const {inspect} = require('util')
 
 const keywords = Object.fromEntries([
     'abstact',
@@ -32,8 +33,8 @@ const keywords = Object.fromEntries([
     'goto',
     'if',
     'implements',
-    'import',
     'in',
+    'include',
     'instanceof',
     'int',
     'interface',
@@ -98,6 +99,7 @@ const compare = [
 const operators = [...ops, ...opsAssign, ...compare, "="].map(el => "operator" + el)
 
 const lexer = moo.compile({
+    NewLine: { match: "\n" },
     WS: { match: /[\s]+/, lineBreaks: true },
     Comment: { match: /\/\/.*?(?:\n|$)/ },
     MultilineComment: { match: /\/\*.*?\*\// },
@@ -140,7 +142,7 @@ lexer.next = (next => () => {
     while ((tok = next.call(lexer))) {
         tok.terminal = true;
         lexer.lastTok = tok;
-        if (["Comment", "MultilineComment"].includes(tok.type)) {
+        if (["Comment", "MultilineComment", "NewLine"].includes(tok.type)) {
             comments.push(tok);
             continue;
         } else if (tok.type === "WS") {
@@ -162,6 +164,10 @@ lexer.next = (next => () => {
     }
     tok.comments = comments;
     tok.terminal = true;
+    tok = {
+        [inspect.custom]: (depth) =>  `<${tok.type}: "${tok.value}">`,
+        ...tok
+    }
     return tok;
 })(lexer.next)
 

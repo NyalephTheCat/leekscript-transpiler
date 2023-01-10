@@ -8,7 +8,7 @@
 
 ####### Macros
 
-Seq1[ELEMENT, SEP] -> $ELEMENT ($SEP $ELEMENT):*                               {% ast("Sequence") %}
+Seq1[ELEMENT, SEP] -> $ELEMENT ($SEP $ELEMENT):*                               {% ast("Sequence1") %}
 Seq[ELEMENT, SEP] -> ($ELEMENT ($SEP $ELEMENT):*):?                            {% ast("Sequence") %}
 
 ####### Main
@@ -31,11 +31,10 @@ Statement ->
   | FunctionDeclaration
   | BreakStatement
   | ContinueStatement
-  | ReturnStatement
   | BlockStatement
-  | ExpressionStatement
   ) Sep                                                                        {% ast("Statement") %}
-# | ";"                                                                        {% ast("EmptyStatement") %}
+  | ExpressionStatement ";"                                                    {% ast("Statement") %}
+  | ";"                                                                        {% id %}
 
 ######## Global Statement
 
@@ -43,17 +42,18 @@ GlobalDeclaration ->
     "global" BindingIdentifier Initializer:?                                   {% ast("GlobalDeclaration") %}
 
 ImportDeclaration ->
-    "import" "(" StringLiteral ")"                                             {% ast("ImportDeclaration") %}
+    "include" "(" StringLiteral ")"                                            {% ast("ImportDeclaration") %}
 
 ClassDefinition ->
     "class" BindingIdentifier ClassExtension:? "{" ClassBody "}"               {% ast("ClassDefinition") %}
 
 ClassExtension ->
-    "extends" IdentifierName                                                   {% ast("ClassExtension") %}
+    "extends" IdentifierName                                                   {% ast("ClassExtension", {sep: " "}) %}
 
 ClassBody ->
-   (ConstructorDeclaration | MethodDeclaration 
-      | ClassPropertyDelcaration | ";"):*                                      {% ast("ClassBody") %}
+   ( ConstructorDeclaration 
+   | MethodDeclaration 
+   | ClassPropertyDelcaration):*                                               {% ast("ClassBody") %}
 
 ConstructorDeclaration ->
     Protection:? "constructor" Arguments FunctionBody                          {% ast("ConstructorDeclaration") %}
@@ -62,7 +62,7 @@ MethodDeclaration ->
     Protection:? "static":? BindingIdentifier Arguments FunctionBody           {% ast("MethodDeclaration") %}
 
 ClassPropertyDelcaration ->
-    Protection:? "static":? BindingIdentifier Initializer:?                    {% ast("ClassPropertyDeclaration") %}
+    Protection:? "static":? BindingIdentifier Initializer:? Sep                {% ast("ClassPropertyDelcaration") %}
 
 Protection ->
     "public"                                                                   {% id %}
@@ -97,7 +97,7 @@ FunctionDeclaration ->
     "function" BindingIdentifier Arguments FunctionBody                        {% ast("FunctionDeclaration") %}
 
 FunctionBody ->
-    "{" Statement:* "}"                                                        {% ast("FunctionBody") %}
+    "{" Statement:* ReturnStatement:? "}"                                      {% ast("FunctionBody") %}
 
 BreakStatement ->
     "break"                                                                    {% ast("BreakStatement") %}
@@ -106,31 +106,39 @@ ContinueStatement ->
     "continue"                                                                 {% ast("ContinueStatement") %}
 
 ReturnStatement ->
-    "return" Expression:?                                                      {% ast("ReturnStatement") %}
+    "return" Expression Sep                                                    {% ast("ReturnStatement") %}
+  | "return" ";"                                                               {% ast("ReturnStatement") %}
 
 BlockStatement ->
-    "{" Statement:* "}"                                                        {% ast("BlockStatement") %}
+    "{" Statement:* ReturnStatement:? "}"                                      {% ast("BlockStatement") %}
 
 EmptyStatement ->
-    ";"                                                                        {% ast("EmptyStatement") %}
+    ";"                                                                        {% id %}
 
 ######## Expression
 
 ExpressionStatement ->
-    Expression                                                                 {% ast("ExpressionStatement") %}
+    Expression                                                                 {% id %}
 
 Expression ->
-    AssignmentExpression                                                       {% id %}
+    FunctionExpression                                                         {% id %}
+  | AssignmentExpression                                                       {% id %}
+
+FunctionExpression ->
+    BindingIdentifier ExecutionArguments                                       {% ast("FunctionExpression") %}
+
+ExecutionArguments ->
+    "(" Seq[Expression, ","] ")"                                               {% ast("ExecutionArguments") %}
 
 AssignmentExpression ->
     ConditionalExpression                                                      {% id %}
   | ArrowFunction                                                              {% id %}
-  | LeftHandSideExpression "=" AssignmentExpression                            {% ast("AssignmentExpression") %}
-  | LeftHandSideExpression %BinAssign AssignmentExpression                     {% ast("AssignmentExpression") %}
+  | LeftHandSideExpression "=" AssignmentExpression                            {% ast("AssignmentExpression", {sep: " "}) %}
+  | LeftHandSideExpression %BinAssign AssignmentExpression                     {% ast("AssignmentExpression", {sep: " "}) %}
 
 ConditionalExpression ->
     ShortCircuitExpression                                                     {% id %}
-  | ShortCircuitExpression "?" AssignmentExpression ":" AssignmentExpression   {% ast("ConditionalExpression") %}
+  | ShortCircuitExpression "?" AssignmentExpression ":" AssignmentExpression   {% ast("ConditionalExpression", {sep: " "}) %}
 
 ShortCircuitExpression ->
     LogicalORExpression                                                        {% id %}
@@ -138,69 +146,67 @@ ShortCircuitExpression ->
 
 CoalesceExpression ->
     BitwiseORExpression                                                        {% id %}
-  | BitwiseORExpression "??" BitwiseORExpression                               {% ast("CoalseceExpression") %}
+  | BitwiseORExpression "??" BitwiseORExpression                               {% ast("CoalseceExpression", {sep: " "}) %}
 
 LogicalORExpression ->
     LogicalANDExpression                                                       {% id %}
-  | LogicalORExpression "||" LogicalANDExpression                              {% ast("LogicalOrExpression") %}
+  | LogicalORExpression "||" LogicalANDExpression                              {% ast("LogicalOrExpression", {sep: " "}) %}
 
 LogicalANDExpression ->
     BitwiseORExpression                                                        {% id %}
-  | LogicalANDExpression "&&" BitwiseORExpression                              {% ast("LogicalANDExpression") %}
+  | LogicalANDExpression "&&" BitwiseORExpression                              {% ast("LogicalANDExpression", {sep: " "}) %}
 
 BitwiseORExpression ->
     BitwiseXORExpression                                                       {% id %}
-  | BitwiseORExpression "|" BitwiseXORExpression                               {% ast("BitwiseORExpression") %}
+  | BitwiseORExpression "|" BitwiseXORExpression                               {% ast("BitwiseORExpression", {sep: " "}) %}
 
 BitwiseXORExpression ->
     BitwiseANDExpression                                                       {% id %}
-  | BitwiseXORExpression "^" BitwiseORExpression                               {% ast("BitwiseXORExpression") %}
+  | BitwiseXORExpression "^" BitwiseORExpression                               {% ast("BitwiseXORExpression", {sep: " "}) %}
 
 BitwiseANDExpression ->
     EqualityExpression                                                         {% id %}
-  | BitwiseANDExpression "&" BitwiseANDExpression                              {% ast("BitwiseANDExpression") %}
+  | BitwiseANDExpression "&" BitwiseANDExpression                              {% ast("BitwiseANDExpression", {sep: " "}) %}
 
 EqualityExpression ->
     RelationalExpression                                                       {% id %}
-  | EqualityExpression "==" RelationalExpression                               {% ast("EqualityExpression") %}
-  | EqualityExpression "!=" RelationalExpression                               {% ast("EqualityExpression") %}
-  | EqualityExpression "===" RelationalExpression                              {% ast("EqualityExpression") /* TODO ADD ERROR HERE */ %}
-  | EqualityExpression "!==" RelationalExpression                              {% ast("EqualityExpression") /* TODO ADD ERROR HERE */ %}
+  | EqualityExpression "==" RelationalExpression                               {% ast("EqualityExpression", {sep: " "}) %}
+  | EqualityExpression "!=" RelationalExpression                               {% ast("EqualityExpression", {sep: " "}) %}
 
 RelationalExpression ->
     ShiftExpression                                                            {% id %}
-  | RelationalExpression "<" ShiftExpression                                   {% ast("RelationalExpression") %}
-  | RelationalExpression ">" ShiftExpression                                   {% ast("RelationalExpression") %}
-  | RelationalExpression "<=" ShiftExpression                                  {% ast("RelationalExpression") %}
-  | RelationalExpression ">=" ShiftExpression                                  {% ast("RelationalExpression") %}
-  | RelationalExpression "instanceof" ShiftExpression                          {% ast("RelationalExpression") %}
-  | RelationalExpression "in" ShiftExpression                                  {% ast("RelationalExpression") %}
+  | RelationalExpression "<" ShiftExpression                                   {% ast("RelationalExpression", {sep: " "}) %}
+  | RelationalExpression ">" ShiftExpression                                   {% ast("RelationalExpression", {sep: " "}) %}
+  | RelationalExpression "<=" ShiftExpression                                  {% ast("RelationalExpression", {sep: " "}) %}
+  | RelationalExpression ">=" ShiftExpression                                  {% ast("RelationalExpression", {sep: " "}) %}
+  | RelationalExpression "instanceof" ShiftExpression                          {% ast("RelationalExpression", {sep: " "}) %}
+  | RelationalExpression "in" ShiftExpression                                  {% ast("RelationalExpression", {sep: " "}) %}
 
 ShiftExpression ->
     AdditiveExpression                                                         {% id %}
-  | ShiftExpression "<<" AdditiveExpression                                    {% ast("ShiftExpression") %}
-  | ShiftExpression ">>" AdditiveExpression                                    {% ast("ShiftExpression") %}
-  | ShiftExpression ">>>" AdditiveExpression                                   {% ast("ShiftExpression") %}
+  | ShiftExpression "<<" AdditiveExpression                                    {% ast("ShiftExpression", {sep: " "}) %}
+  | ShiftExpression ">>" AdditiveExpression                                    {% ast("ShiftExpression", {sep: " "}) %}
+  | ShiftExpression ">>>" AdditiveExpression                                   {% ast("ShiftExpression", {sep: " "}) %}
 
 AdditiveExpression ->
     MultiplicativeExpression                                                   {% id %}
-  | AdditiveExpression "+" MultiplicativeExpression                            {% ast("AdditiveExpression") %}
-  | AdditiveExpression "-" MultiplicativeExpression                            {% ast("AdditiveExpression") %}
+  | AdditiveExpression "+" MultiplicativeExpression                            {% ast("AdditiveExpression", {sep: " "}) %}
+  | AdditiveExpression "-" MultiplicativeExpression                            {% ast("AdditiveExpression", {sep: " "}) %}
 
 MultiplicativeExpression ->
     ExponentiationExpression                                                   {% id %}
-  | MultiplicativeExpression "*" ExponentiationExpression                      {% ast("MultiplicativeExpression") %}
-  | MultiplicativeExpression "/" ExponentiationExpression                      {% ast("MultiplicativeExpression") %}
-  | MultiplicativeExpression "\\" ExponentiationExpression                     {% ast("MultiplicativeExpression") %}
-  | MultiplicativeExpression "%" ExponentiationExpression                      {% ast("MultiplicativeExpression") %}
+  | MultiplicativeExpression "*" ExponentiationExpression                      {% ast("MultiplicativeExpression", {sep: " "}) %}
+  | MultiplicativeExpression "/" ExponentiationExpression                      {% ast("MultiplicativeExpression", {sep: " "}) %}
+  | MultiplicativeExpression "\\" ExponentiationExpression                     {% ast("MultiplicativeExpression", {sep: " "}) %}
+  | MultiplicativeExpression "%" ExponentiationExpression                      {% ast("MultiplicativeExpression", {sep: " "}) %}
 
 ExponentiationExpression ->
     UnaryExpression                                                            {% id %}
-  | UpdateExpression "**" ExponentiationExpression                             {% ast("ExponentiationExpression") %}
+  | UpdateExpression "**" ExponentiationExpression                             {% ast("ExponentiationExpression", {sep: " "}) %}
 
 UnaryExpression ->
     UpdateExpression                                                           {% id %}
-  | "typeof" UnaryExpression                                                   {% ast("UnaryExpression") %}
+  | "typeof" UnaryExpression                                                   {% ast("UnaryExpression", {sep: " "}) %}
   | "+" UnaryExpression                                                        {% ast("UnaryExpression") %}
   | "-" UnaryExpression                                                        {% ast("UnaryExpression") %}
   | "~" UnaryExpression                                                        {% ast("UnaryExpression") %}
@@ -236,7 +242,7 @@ Arguments ->
 
 NewExpression ->
     MemberExpression                                                           {% id %}
-  | "new" NewExpression                                                        {% ast("NewExpression") %}
+  | "new" MemberExpression                                                     {% ast("NewExpression", {sep: " "}) %}
 
 CallExpression ->
    CallExpression                                                              {% ast("CallExpression") %}
@@ -258,10 +264,10 @@ CoverCallExpressionAndArrowHead ->
     "(" Seq[Expression, ","] ")"                                               {% ast("CoverCallExpressionAndArrowHead") %}
 
 Initializer ->
-    "=" AssignmentExpression                                                   {% ast("Initializer") %}
+    "=" AssignmentExpression                                                   {% ast("Initializer", {sep: " "}) %}
 
 ArrowFunction ->
-    ArrowParameters "=>" ConciseBody                                           {% ast("ArrowFunction") %}
+    ArrowParameters "=>" ConciseBody                                           {% ast("ArrowFunction", {sep: " "}) %}
 
 ArrowParameters ->
     BindingIdentifier                                                          {% id %}

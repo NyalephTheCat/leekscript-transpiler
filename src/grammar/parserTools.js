@@ -1,6 +1,19 @@
+const { inspect } = require("util");
+
 function ast(name, props) {
     return (values) => {
-        var self = {type: name, values, ...props}
+        var self = {
+            [inspect.custom]: (depth) => {
+                return {
+                    type: name,
+                    values
+                }
+
+            },
+            type: name, 
+            values, 
+            ...props
+        }
         
         var i = 0;
         for (var key in values) {
